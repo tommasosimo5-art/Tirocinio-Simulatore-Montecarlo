@@ -3,6 +3,7 @@
 import time
 
 import numpy as np
+import spekpy as sp
 
 from mc_sim import mc_sim
 #from mc_sim_test import mc_sim
@@ -41,12 +42,44 @@ def main() -> None:
     }
 
     # Energy grid and input spectrum definition.
-    e_x = np.arange(5, 70.1, 0.1) # Energy grid from 5 to 70 keV with 0.1 keV steps.
-    #e_x = np.arange(2, 100.1, 0.1) 
-    w_in = np.zeros_like(e_x, dtype=int) # Input spectrum with 0 counts in all bins.
-    w_in[e_x < 1] = 30 # Set 30 counts for energies below 1 keV.
-    w_in[np.isclose(e_x, 59.5)] = int(1e4) # Set 10,000 counts at 59.5 keV to simulate a monoenergetic source.
+    #e_x = np.arange(5, 70.1, 0.1) # Energy grid from 5 to 70 keV with 0.1 keV steps.
+    ##e_x = np.arange(2, 100.1, 0.1) 
+    #w_in = np.zeros_like(e_x, dtype=int) # Input spectrum with 0 counts in all bins.
+    #w_in[e_x < 1] = 30 # Set 30 counts for energies below 1 keV.
+    #w_in[np.isclose(e_x, 48.8)] = int(1e4) # Set 10,000 counts at 59.5 keV to simulate a monoenergetic source.
+    
+    
+    
+    
+    # Create X-ray spectrum with silver anode
+    s = sp.Spek(
+        kvp=50,      # tube voltage
+        
+        #th=12,       # anode angle
+        targ='Ag'    # silver target
+    )
+    
+    # Add filters
+    #s.filter('Au', 0.25)   # 0.25 mm Gold
+    s.filter('Nb', 1.0)   # 1.0 mm Niobium
 
+    e_x, w_in = s.get_spectrum()
+
+    e_x = np.array(e_x)
+    w_in = np.array(w_in)
+    
+    # Normalize and scale to Monte Carlo counts
+    w_in = w_in / np.max(w_in)
+
+    # total simulated photons
+    Nphotons = 1000  # 10000
+
+    w_in = (w_in * Nphotons).astype(int)
+        
+        
+        
+        
+        
     # Run the Monte Carlo simulation.
     start_time = time.time()
     w_det, _ = mc_sim(detector, e_x, w_in) # Run the simulation with the defined detector, energy grid, and input spectrum.
