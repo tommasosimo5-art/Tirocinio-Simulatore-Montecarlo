@@ -1,3 +1,4 @@
+#i commenti con "??" indicano valori Usati nel programma originale di Vittorio
 """Entry point for running the Python Monte Carlo simulator."""
 
 import time
@@ -32,20 +33,21 @@ def main() -> None:
     """Run the example simulation and plot the spectrum."""
     detector = {
         "sensor": "CdTe",
-        "sensor_thickness": 1e-1, #650 * 1e-4,
-        "sensor_temperature": 100, #240
-        "pixel_size": 200 * 1e-4,  #62 * 1e-4, 
-        "bias_V": 425, #400
-        "threshold0": 8,
+        "sensor_thickness": 1e-1, #?? 650 * 1e-4,
+        "sensor_temperature": 100, #?? 240
+        "pixel_size": 200 * 1e-4,  #?? 62 * 1e-4, 
+        "bias_V": 425, #?? 400
+        "threshold0": 8, #?? 4
         "acquisition_mode": "csm",
     }
 
     # Energy grid and input spectrum definition.
     e_x = np.arange(5, 70.1, 0.1) # Energy grid from 5 to 70 keV with 0.1 keV steps.
-    #e_x = np.arange(2, 100.1, 0.1) 
+    #??e_x = np.arange(2, 100.1, 0.1)
     w_in = np.zeros_like(e_x, dtype=int) # Input spectrum with 0 counts in all bins.
     w_in[e_x < 1] = 30 # Set 30 counts for energies below 1 keV.
     w_in[np.isclose(e_x, 59.5)] = int(1e4) # Set 10,000 counts at 59.5 keV to simulate a monoenergetic source.
+    #??w_in[np.isclose(e_x, 37.0)] = int(1e4)
 
     # Run the Monte Carlo simulation.
     start_time = time.time()
