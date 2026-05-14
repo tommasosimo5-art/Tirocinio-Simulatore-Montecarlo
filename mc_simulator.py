@@ -55,6 +55,18 @@ def main() -> None:
     elapsed = time.time() - start_time
     print(f"Simulation completed in {elapsed:.2f}s")
 
+
+    # Count total events
+    total_input = np.sum(w_in)
+    total_detected = np.sum(w_det)
+
+    print(f"Total input events     : {total_input}")
+    print(f"Total detected events  : {total_detected}")
+    print(f"Difference             : {total_detected - total_input}")
+
+    efficiency = 100 * total_detected / total_input
+    print(f"Detection efficiency   : {efficiency:.2f}%")
+
     try:
         import matplotlib.pyplot as plt
     except ImportError:
