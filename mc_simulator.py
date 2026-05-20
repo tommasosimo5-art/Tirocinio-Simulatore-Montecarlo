@@ -49,11 +49,11 @@ def main() -> None:
     """Run the example simulation and plot the spectrum."""
     detector = {
         "sensor": "CdTe",
-        "sensor_thickness": 1e-1, #?? 650 * 1e-4,
-        "sensor_temperature": 100, #?? 240
-        "pixel_size": 200 * 1e-4,  #?? 62 * 1e-4, 
-        "bias_V": 425, #?? 400
-        "threshold0": 8, #?? 4
+        "sensor_thickness":  650 * 1e-4,
+        "sensor_temperature":  240,
+        "pixel_size":  62 * 1e-4, 
+        "bias_V":  400,
+        "threshold0":  4,
         "acquisition_mode": "csm",
     }
 
@@ -121,26 +121,26 @@ def main() -> None:
     fwhm2 = 2.355 * sigma2
     fwhm3 = 2.355 * sigma3
 
-    print("\n===== FIT RESULTS =====")
+    print("\n FIT RESULTS ")
 
-    print(f"Peak 1:")
+    print("Peak 9:")
     print(f"  mu     = {mu1:.3f} keV")
-    print(f"  sigma  = {sigma1:.3f} keV")
     print(f"  FWHM   = {fwhm1:.3f} keV")
-
-    print(f"\nPeak 2:")
+    print("FWHM dalle tabelle a 9 keV: 2.063 keV")
+    print(f"  Differenza   = {(fwhm1 - 2.063):.3f} keV")
+    print("Peak 16:")
     print(f"  mu     = {mu2:.3f} keV")
-    print(f"  sigma  = {sigma2:.3f} keV")
     print(f"  FWHM   = {fwhm2:.3f} keV")
-
-    print(f"\nPeak 3:")
+    print("FWHM dalle tabelle a 16 keV: 2.643 keV")
+    print(f"  Differenza   = {(fwhm2 - 2.643):.3f} keV")
+    print("Peak 24:")
     print(f"  mu     = {mu3:.3f} keV")
-    print(f"  sigma  = {sigma3:.3f} keV")
     print(f"  FWHM   = {fwhm3:.3f} keV")
+    print("FWHM dalle tabelle a 24 keV: 3.307 keV")
+    print(f"  Differenza   = {(fwhm3 - 3.307):.3f} keV")
 
     # Fitted spectrum
     fit_curve = triple_gaussian(e_x, *params)
-        
     
     plt.figure()
     #plt.plot(e_x, smoothed / np.max(smoothed), label="Detected spectrum")
@@ -148,9 +148,15 @@ def main() -> None:
     plt.plot(e_x, fit_curve, "--", label="Triple Gaussian fit")
     plt.plot(e_x, w_in / np.max(w_in), label="Input spectrum", linestyle="--")
     #plt.plot(e_x, w_in, label="Input spectrum", linestyle="--")
-    np.save("detected_spectrum.npy", smoothed)
+    np.save("detected_spectrum_smoothed.npy", smoothed)
     np.save("input_spectrum.npy", w_in)
     np.save("detected_spectrum.npy", w_det)
+    np.save("FWHM_values.npy", [fwhm1, fwhm2, fwhm3])
+    
+    #np.load("detected_spectrum_smoothed.npy")
+    #np.load("input_spectrum.npy")    
+    #np.load("detected_spectrum.npy")    
+    #np.load("FWHM_values.npy")
     
     plt.xlim([3, 40])
     plt.xlabel("Energy (keV)")
@@ -161,5 +167,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-#Usa spekpy per fare i grafici anche dell' argento, degli altri materiali e con i filtri, attento che i dati non sono in conteggi

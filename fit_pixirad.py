@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 #??E = np.array([26, 33, 37, 50], dtype=float) #valori pixirad paper vittorio
 #??FWHM = np.array([3.4, 3.6, 3.7, 4.1], dtype=float)
-E = np.array([9, 13, 17, 21, 25, 29, 33, 37], dtype=float)
-FWHM = np.array([2.73, 2.15, 2.78, 3.3, 3.4, 3.8, 4.1, 4.2], dtype=float)
+E = np.array([ 13, 17, 21, 25, 29, 33, 37], dtype=float)
+FWHM = np.array([ 2.15, 2.78, 3.3, 3.4, 3.8, 4.1, 4.2], dtype=float)
 
 # fit lineare y = a*x + b
 N = len(E)
@@ -59,17 +59,6 @@ F_fit_quad = (
     + c_quad
 )
 
-plt.figure(figsize=(8,5))
-plt.scatter(E, FWHM, label="Dati sperimentali")
-plt.plot(E_fit, F_fit_lin, label="Fit lineare")
-plt.plot(E_fit, F_fit_quad, label="Fit quadratico")
-plt.xlabel("Energia (keV)")
-plt.ylabel("FWHM (keV)")
-plt.title("Risoluzione energetica Pixirad")
-plt.grid(True)
-plt.legend()
-plt.show()
-
 # CHI QUADRO
 
 sigma = 0.4
@@ -90,5 +79,21 @@ print(f"Chi^2 lineare = {chi2_lin:.4f}")
 print(f"Chi^2 ridotto lineare = {chi2_red_lin:.4f}")
 print(f"Chi^2 quadratico = {chi2_quad:.4f}")
 print(f"Chi^2 ridotto quadratico = {chi2_red_quad:.4f}")
+
+plt.figure(figsize=(8,5))
+plt.scatter(E, FWHM, label="Dati sperimentali")
+plt.plot(E_fit, F_fit_lin, label="Fit lineare")
+print(f"FWHM lineare a 9 keV = {a_lin * 9 + b_lin:.3f} keV")
+print(f"FWHM lineare a 16 keV = {a_lin * 16 + b_lin:.3f} keV")
+print(f"FWHM lineare a 24 keV = {a_lin * 24 + b_lin:.3f} keV")
+plt.plot(E_fit, F_fit_quad, label="Fit quadratico")
+plt.xlabel("Energia (keV)")
+plt.ylabel("FWHM (keV)")
+plt.title("Risoluzione energetica Pixirad")
+plt.grid(True)
+plt.legend()
+plt.show()
+
+
 
 #Fit lineare FWHM = a_lin * E + b_lin  a = 0.029180327868852756     b = 2.6349180327868744

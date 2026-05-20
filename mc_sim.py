@@ -341,8 +341,8 @@ def energy_detection(
         # FWHM(E) = a*E + b Obtained from fitting 
         #?? a_res = 0.02918032786852756
         #?? b_res = 2.63491803286868744
-        a_res = 0.06904761904761901
-        b_res = 1.7194047619047628
+        a_res = 0.08294642857142853
+        b_res = 1.3163392857142868
         def get_el_noise_sigma(energy_keV: float) -> float:
             fwhm_energy = a_res * energy_keV + b_res
             sigma_energy = fwhm_energy / 2.355
