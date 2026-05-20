@@ -338,7 +338,15 @@ def energy_detection(
 
     if sensor == "CdTe":
         w_pc_en = 4.3e-3 # eV per electron-hole pair in CdTe.
-        el_noise_sigma = 283 # Standard deviation of electronic noise in electrons, based on an empirical fit to a MATLAB model of charge collection in CdTe. This value is chosen to produce a realistic energy resolution in the simulated spectrum.
+        # FWHM(E) = a*E + b Obtained from fitting 
+        #?? a_res = 0.02918032786852756
+        #?? b_res = 2.63491803286868744
+        a_res = 0.06904761904761901
+        b_res = 1.7194047619047628
+        def get_el_noise_sigma(energy_keV: float) -> float:
+            fwhm_energy = a_res * energy_keV + b_res
+            sigma_energy = fwhm_energy / 2.355
+            return float(sigma_energy / w_pc_en)
     else:
         raise ValueError("Unsupported sensor for energy detection; only CdTe is available.")
 
@@ -357,6 +365,7 @@ def energy_detection(
         int_charge = trapz(
             trapz(electron_distr * collection_area, xx, axis=1), yy, axis=0
         )
+        el_noise_sigma = get_el_noise_sigma(float(int_charge * w_pc_en))
         det_charge = rng.normal(int_charge, el_noise_sigma) # Add electronic noise to the collected charge.
         det_en = det_charge * w_pc_en # Convert collected charge to energy using the pair creation energy.
         if det_en < thr_0:
@@ -390,6 +399,7 @@ def energy_detection(
             )
 
             int_charge = max([int_charge1, int_charge2, int_charge3, int_charge4])
+            el_noise_sigma = get_el_noise_sigma(float(int_charge * w_pc_en))
             det_charge = rng.normal(
                 int_charge, math.sqrt(int_charge + el_noise_sigma**2)
             )
