@@ -4,7 +4,8 @@
 import time
 
 import numpy as np
-
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
 from mc_sim import mc_sim
 #from mc_sim_test import mc_sim
 
@@ -28,7 +29,22 @@ def _smooth(values: np.ndarray, window: int = 5) -> np.ndarray:
     kernel = np.ones(window) / window
     return np.convolve(values, kernel, mode="same")
 
+def gaussian(x, A, mu, sigma):
+    return A * np.exp(
+        -((x - mu)**2) / (2 * sigma**2)
+    )
 
+def triple_gaussian(
+    x,
+    A1, mu1, sigma1,
+    A2, mu2, sigma2,
+    A3, mu3, sigma3
+):
+    g1 = gaussian(x, A1, mu1, sigma1)
+    g2 = gaussian(x, A2, mu2, sigma2)
+    g3 = gaussian(x, A3, mu3, sigma3)
+
+    return g1 + g2 + g3
 def main() -> None:
     """Run the example simulation and plot the spectrum."""
     detector = {
@@ -80,13 +96,63 @@ def main() -> None:
 
     # Normalize and plot the detected spectrum.
     smoothed = _smooth(w_det)
+        # Initial guesses for fit parameters
+    p0 = [
+        np.max(smoothed), 9, 1,
+        np.max(smoothed), 16, 1,
+        np.max(smoothed), 24, 1
+    ]
+
+    # Fit
+    params, covariance = curve_fit(
+        triple_gaussian,
+        e_x,
+        smoothed,
+        p0=p0
+    )
+
+    # Extract fitted parameters
+    A1, mu1, sigma1, \
+    A2, mu2, sigma2, \
+    A3, mu3, sigma3 = params
+
+    # Convert sigma -> FWHM
+    fwhm1 = 2.355 * sigma1
+    fwhm2 = 2.355 * sigma2
+    fwhm3 = 2.355 * sigma3
+
+    print("\n===== FIT RESULTS =====")
+
+    print(f"Peak 1:")
+    print(f"  mu     = {mu1:.3f} keV")
+    print(f"  sigma  = {sigma1:.3f} keV")
+    print(f"  FWHM   = {fwhm1:.3f} keV")
+
+    print(f"\nPeak 2:")
+    print(f"  mu     = {mu2:.3f} keV")
+    print(f"  sigma  = {sigma2:.3f} keV")
+    print(f"  FWHM   = {fwhm2:.3f} keV")
+
+    print(f"\nPeak 3:")
+    print(f"  mu     = {mu3:.3f} keV")
+    print(f"  sigma  = {sigma3:.3f} keV")
+    print(f"  FWHM   = {fwhm3:.3f} keV")
+
+    # Fitted spectrum
+    fit_curve = triple_gaussian(e_x, *params)
+        
+    
     plt.figure()
     #plt.plot(e_x, smoothed / np.max(smoothed), label="Detected spectrum")
     plt.plot(e_x, smoothed , label="Detected spectrum")
+    plt.plot(e_x, fit_curve, "--", label="Triple Gaussian fit")
     plt.plot(e_x, w_in / np.max(w_in), label="Input spectrum", linestyle="--")
     #plt.plot(e_x, w_in, label="Input spectrum", linestyle="--")
+    np.save("detected_spectrum.npy", smoothed)
+    np.save("input_spectrum.npy", w_in)
+    np.save("detected_spectrum.npy", w_det)
     
-    plt.xlim([3, 70])
+    plt.xlim([3, 40])
     plt.xlabel("Energy (keV)")
     plt.ylabel("Normalized counts")
     plt.legend()

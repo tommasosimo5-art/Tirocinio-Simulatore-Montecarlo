@@ -74,7 +74,7 @@ plt.show()
 
 # CHI QUADRO
 
-sigma = 0.4
+sigma = 0.2
 F_lin_data = a_lin * E + b_lin
 F_quad_data = a_quad * E**2 + b_quad * E + c_quad
 chi2_lin = np.sum(((FWHM - F_lin_data) / sigma) ** 2)
