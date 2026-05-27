@@ -45,7 +45,7 @@ def main() -> None:
         "threshold0":  4,
         "acquisition_mode": "csm",
     }
-    source_energy = 9.0 # keV
+    source_energy = 21.0 # keV
     # Energy grid and input spectrum definition.
     e_x = np.arange(2, 100.1, 0.1)
     
@@ -80,13 +80,14 @@ def main() -> None:
         return
     
     data = np.genfromtxt(
-        "sqrtAB_fit_residuals.csv",
+        "fit_results.csv",
         delimiter=",",
         skip_header=1
     )
 
-    a_res = data[:, 0]        # Expected FWHM from calibration fit
-    b_res = data[:, 1]  
+    a_res = data[ 0] 
+    b_res = data[ 1]
+
     print(f"Calibration fit parameters: a = {a_res:.10f}, b = {b_res:.10f}")
     # Expected FWHM from calibration fit
     fwhm  =np.sqrt(a_res**2  + b_res*source_energy)
@@ -126,8 +127,8 @@ def main() -> None:
     
     plt.figure()
     #plt.plot(e_x, w_det / np.max(w_det), label="Detected spectrum")
-    plt.plot(e_x, w_det , label="Detected spectrum")
-    plt.plot(e_x, fit_curve, "--", label="Gaussian fit")
+    plt.plot(e_x, w_det / np.max(w_det) , label="Detected spectrum")
+    #plt.plot(e_x, fit_curve / np.max(fit_curve), "--", label="Gaussian fit")
     plt.plot(e_x, w_in / np.max(w_in), label="Input spectrum", linestyle="--")
     #plt.plot(e_x, w_in, label="Input spectrum", linestyle="--")
     np.save("detected_spectrum_w_det.npy", w_det)
@@ -156,6 +157,38 @@ def main() -> None:
     #np.load("detected_spectrum.npy")    
     #np.load("FWHM_value.npy")
     
+    # Try to overlay the experimental differential curve at 21 keV (if available)
+    try:
+        exp_data = np.genfromtxt(
+            "energy_21keV_curve.csv",
+            delimiter=",",
+            skip_header=1
+        )
+
+        exp_E = exp_data[:, 0]
+        exp_counts = exp_data[:, 2]
+        exp_err = exp_data[:, 3]
+
+        # Normalize experimental counts for plotting on the same normalized axis
+        if np.max(exp_counts) > 0:
+            exp_counts_norm = exp_counts / np.max(exp_counts)
+            exp_err_norm = exp_err / np.max(exp_counts)
+        else:
+            exp_counts_norm = exp_counts
+            exp_err_norm = exp_err
+
+        plt.errorbar(
+            exp_E,
+            exp_counts_norm,
+            yerr=exp_err_norm,
+            fmt='o',
+            markersize=4,
+            capsize=3,
+            label="Experimental 21 keV"
+        )
+    except Exception as exc:  # pragma: no cover - non-fatal plotting error
+        print(f"Experimental data not plotted: {exc}")
+
     plt.xlim([3, 40])
     plt.xlabel("Energy (keV)")
     plt.ylabel("Normalized counts")

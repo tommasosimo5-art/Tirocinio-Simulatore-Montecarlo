@@ -338,13 +338,23 @@ def energy_detection(
 
     if sensor == "CdTe":
         w_pc_en = 4.3e-3 # eV per electron-hole pair in CdTe.
-        # FWHM(E) = a*E + b Obtained from fitting 
-        #?? a_res = 0.02918032786852756
-        #?? b_res = 2.63491803286868744
-        a_res = 0.08294642857142853
-        b_res = 1.3163392857142868
+        # Prefer the sqrt model FWHM(E) = sqrt(a^2 + b*E) used by fit_pixirad and mc_simulator.
+        # Try to read fit parameters from fit_results.csv (a_sqrt, b_sqrt), fallback to defaults.
+        try:
+            fit_data = np.genfromtxt("fit_results.csv", delimiter=",", skip_header=1)
+            if fit_data.ndim == 1:
+                a_res = float(fit_data[0])
+                b_res = float(fit_data[1])
+            else:
+                a_res = float(fit_data[0, 0])
+                b_res = float(fit_data[0, 1])
+        except Exception:
+            # fallback values (approximate)
+            a_res = 0.08294642857142853
+            b_res = 1.3163392857142868
+
         def get_el_noise_sigma(energy_keV: float) -> float:
-            fwhm_energy = a_res * energy_keV + b_res
+            fwhm_energy = math.sqrt(a_res ** 2 + b_res * energy_keV)
             sigma_energy = fwhm_energy / 2.355
             return float(sigma_energy / w_pc_en)
     else:
