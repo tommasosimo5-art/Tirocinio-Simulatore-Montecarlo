@@ -34,13 +34,6 @@ def gaussian(x, A, mu, sigma):
         -((x - mu)**2) / (2 * sigma**2)
     )
 
-def triple_gaussian(
-    x,
-    A1, mu1, sigma1
-):
-    g1 = gaussian(x, A1, mu1, sigma1)
-    return g1
-
 def main() -> None:
     """Run the example simulation and plot the spectrum."""
     detector = {
@@ -52,14 +45,14 @@ def main() -> None:
         "threshold0":  4,
         "acquisition_mode": "csm",
     }
-
+    source_energy = 9.0 # keV
     # Energy grid and input spectrum definition.
     e_x = np.arange(2, 100.1, 0.1)
     
     w_in = np.zeros_like(e_x, dtype=int) # Input spectrum with 0 counts in all bins.
     w_in[e_x < 1] = 30 # Set 30 counts for energies below 1 keV.
     # Sorgente con tre righe monoenergetiche
-    w_in[np.isclose(e_x, 9.0)]  = int(1e2)
+    w_in[np.isclose(e_x, source_energy)]  = int(1e4)
 
 
     # Run the Monte Carlo simulation.
@@ -86,48 +79,55 @@ def main() -> None:
         print("matplotlib is not installed; skipping the plot.")
         return
     
-    a_res = 0.08294642857142853
-    b_res = 1.3163392857142868
+    data = np.genfromtxt(
+        "sqrtAB_fit_residuals.csv",
+        delimiter=",",
+        skip_header=1
+    )
+
+    a_res = data[:, 0]        # Expected FWHM from calibration fit
+    b_res = data[:, 1]  
+    print(f"Calibration fit parameters: a = {a_res:.10f}, b = {b_res:.10f}")
     # Expected FWHM from calibration fit
-    fwhm  = a_res * 9  + b_res
+    fwhm  =np.sqrt(a_res**2  + b_res*source_energy)
 
     # Convert FWHM -> sigma
     sigma  = fwhm  / 2.355
 
         
         # Initial guesses for fit parameters
-    p0 = [ np.max(w_det), 9, sigma]
+    p0 = [ np.max(w_det), source_energy, sigma]
 
     # Fit
-    params, covariance = curve_fit(
-        triple_gaussian,
+    params, _ = curve_fit(
+        gaussian,
         e_x,
         w_det,
         p0=p0
     )
 
-    # Extract fitted parameters
-    A1, mu1, sigma1 = params
+    # Extract fitted parameters   
+    _, mu1, sigma1 = params
 
     # Convert sigma -> FWHM
     fwhm1 = 2.355 * sigma1
 
     print("\n FIT RESULTS ")
 
-    print("Peak 9:")
+    print("Peak :")
     print(f"  mu     = {mu1:.3f} keV")
     print(f"  FWHM   = {fwhm1:.3f} keV")
-    print("FWHM dalle tabelle a 9 keV: 2.063 keV")
+    print(f"FWHM dalle tabelle a {source_energy} keV: 2.063 keV")
     print(f"  Differenza   = {(fwhm1 - 2.063):.3f} keV")
 
 
     # Fitted spectrum
-    fit_curve = triple_gaussian(e_x, *params)
+    fit_curve = gaussian(e_x, *params)
     
     plt.figure()
     #plt.plot(e_x, w_det / np.max(w_det), label="Detected spectrum")
     plt.plot(e_x, w_det , label="Detected spectrum")
-    plt.plot(e_x, fit_curve, "--", label="Triple Gaussian fit")
+    plt.plot(e_x, fit_curve, "--", label="Gaussian fit")
     plt.plot(e_x, w_in / np.max(w_in), label="Input spectrum", linestyle="--")
     #plt.plot(e_x, w_in, label="Input spectrum", linestyle="--")
     np.save("detected_spectrum_w_det.npy", w_det)
@@ -135,13 +135,22 @@ def main() -> None:
     np.save("detected_spectrum.npy", w_det)
     np.save("FWHM_value.npy", fwhm1)
     
-    np.savetxt("dati.csv",np.column_stack((e_x, w_det)), delimiter=", ", header="Energy,w_det", comments="")
-    np.savetxt("dati1.csv",np.column_stack((e_x, w_in)), delimiter=", ", header="Energy,w_in", comments="")
-    np.savetxt("dati2.csv",np.column_stack((e_x, w_det)), delimiter=", ", header="Energy,w_w_det", comments="")
-    #np.savetxt("dati3.csv",np.column_stack((e_x, fwhm1)), delimiter=", ", header="Energy,fwhm1", comments="")
-    #np.savetxt("dati4.csv",np.column_stack((e_x, fwhm2)), delimiter=", ", header="Energy,fwhm2", comments="")
-    #np.savetxt("dati5.csv",np.column_stack((e_x, fwhm3)), delimiter=", ", header="Energy,fwhm3", comments="")
+    # Create one single CSV file with all spectra
 
+    all_data = np.column_stack((
+        e_x,
+        w_in,
+        w_det,
+        fit_curve
+    ))
+
+    np.savetxt(
+        "simulation_results.csv",
+        all_data,
+        delimiter=",",
+        header="Energy_keV,InputSpectrum,DetectedSpectrum,GaussianFit",
+        comments=""
+    )
     #np.load("detected_spectrum_w_det.npy")
     #np.load("input_spectrum.npy")    
     #np.load("detected_spectrum.npy")    
